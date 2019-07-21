@@ -7,6 +7,7 @@ import re
 import sys
 
 # Complete the countingValleys function below.
+# Counts number of times hiker, starting at sea level, walks into valley (negative altitude from sea level)
 def countingValleys(n, s):
     alt = 0
     count = 0
