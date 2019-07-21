@@ -7,6 +7,7 @@ import re
 import sys
 
 # Complete the sockMerchant function below.
+# counts pairs of numbers in an array (that correspond to sock colors), given input of number of socks and array containing colors
 def sockMerchant(n, ar):
     pairs = 0
     arr = [0] * 101
