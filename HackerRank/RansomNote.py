@@ -1,3 +1,5 @@
+# Tests whether Note (array of strings) is a subset of Magazine
+
 # Naive way failed some test cases
 # Plan: Make Magazine into a dictionary, indexed by its values
 # If value not a key of the dictionary, print NO
