@@ -6,4 +6,3 @@ def solution(A):
         if A[x] == temp:
             temp += 1
     return temp
-    pass
