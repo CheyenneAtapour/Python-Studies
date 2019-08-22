@@ -3,6 +3,15 @@
 # unresolved issues:
 	# what to do when ending time not stated?
 
+import re
+
+# convert a time range string to a tuple (time double, {am|pm})
+# if you split a char that doesnt exist, you get the whole string
+def range2tup(range):
+	times = range.split("-")
+
+	pass
+
 # convert julian number into starting calendar date
 # return a tuple (day, month, year)
 def jul2date(j):
@@ -32,6 +41,7 @@ for x in range(len(lines)):
 	try:
 		# check if the line's priority is within our outlook
 		if int(line[0][1:-1], 10) <= OUTLOOK and int(line[0][1:-1], 10) >= 0: # slicing is first inclusive, last exclusive
+			line.append(int(line[0][1:-1], 10))
 			outarr.append(line)
 			print(line)
 			parsed = 1
@@ -74,6 +84,7 @@ for x in range(len(lines)):
 					strnum += priority[y]
 
 			if len(strnum) >= 1 and int(strnum, 10) <= OUTLOOK and int(strnum, 10) >= 0:
+				line.append(int(strnum,10))
 				outarr.append(line)
 				print(line)
 				parsed = 1
@@ -83,7 +94,7 @@ for x in range(len(lines)):
 print(" ")
 print(outarr)
 
-# outarr now contains [ ["(priority)", "description", "of", "task"] , [...] , ... ]
+# outarr now contains [ ["(priority)", "description", "of", "task"] , [...] , ... , priority]
 
 # need to consider the format of our schedule ouput and data struct
 # thinking to print out every free hour. 
@@ -94,7 +105,7 @@ print(outarr)
 julnum = int(lines[1].split(" ")[0], 10)
 #print(jul2date(julnum))
 
-avail = []
+avail = [] # want [  [[str avail],[tuple avail]]  ] 
 
 # create availability general
 for x in range(OUTLOOK): # 0 to outlook
@@ -105,15 +116,21 @@ for x in range(OUTLOOK): # 0 to outlook
 	# a if condition else b ; "\" for linebreak 
 	s = "Free: " + str(WAKE[0]) + ( "AM" if WAKE[1] == 0 else "PM" ) \
 	 + " to " + (str(SLEEP[0])) + ( "PM" if SLEEP[1] == 1 else "AM" )
-	temp.append(s)
-	avail.append(temp)
+	temp.append(s) # temp is the [str avail]
+	tupavail = [WAKE,SLEEP]
+	avail.append([temp, tupavail])
+
+print(" ")
+print(avail)
+print(" ")
 
 # remove dates in which I am busy with events
 # run through outarr, and change elements in avail
-for x in range(outarr):
+for x in range(len(outarr)):
 	# if the element falls within our availability range, 
 	# update our availability within corresponding avail array element
 	# priority number in outarr corresponds to index in avail array
+	# as outarr[x][-1]
 	# need to parse the time range given
 	# what to do with a singular time (not a range?)
 
@@ -122,6 +139,25 @@ for x in range(outarr):
 		# xx:xx(x)m - xx:xx(x)m 
 
 		# xx:xx{ }(xm){ }-{ }xx:xx{ }(x)m
-
 	
+	# first, let's try the first case
+	event = outarr[x]
 
+	#[0-9]?[0-9].m-[0-9]?[0-9].m
+
+	for y in range(len(event)):
+		m = re.search('[0-9]?:?[0-9]:?[0-9]?[0-9]?.m-[0-9]?:?[0-9]:?[0-9]?[0-9]?.m', str(event[y]))
+		if m != None: # we have found a "time range"
+			print(event[y])
+			#event[-1] indexes into avail array
+			#avail[x][{str|tup}][pos]
+			
+			# if the event falls within our availability
+			# we need to loop through our tuples to determine this
+			# what are the cases?
+				# 1. the time range falls after 1 tuple, and before the next tuple
+				# 2. the time range starts after 1 tuple, and runs through other tuples
+				# 3. the time range starts before a tuple, and runs past a tuple
+			
+			#if avail[event[-1]][1][]
+			pass
