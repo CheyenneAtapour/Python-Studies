@@ -2,8 +2,20 @@
 
 # unresolved issues:
 	# what to do when ending time not stated?
+		# A make a default hours that things should end, and supply a warning that things may take longer
 
 import re
+
+# compare a tuple
+def tupLess(x, y):
+	if (x[1] < y[1]) or (x[1] == y[1] and x[0] % 12 < y[0] % 12):
+		return True
+	return False
+
+def tupGreater(x, y):
+	if (x[1] > y[1]) or (x[1] == y[1] and x[0] % 12 > y[0] % 12): 
+		return True
+	return False
 
 # convert a time range string to a tuple (time double, {am|pm})
 # if you split a char that doesnt exist, you get the whole string
@@ -11,6 +23,28 @@ def range2tup(range):
 	times = range.split("-")
 
 	pass
+
+def printAvail(arr):
+	for x in arr:
+		print (x)
+	pass
+
+# takes array of tuples: [(7,0), (11,1)]
+def printHelper(arr):
+	s = ""
+	for x in range(0, len(arr), 2):
+		s += (str(arr[x][0]) + ("am" if arr[x][1] == 0 else "pm") + " to " + str(arr[x+1][0]) + ("am" if arr[x+1][1] == 0 else "pm"))
+		if x + 2 < len(arr):
+			s += "; "
+	return s
+
+def printAvailability(arr):
+	print ("I am free: ")
+	print ()
+	for x in arr:
+		if len(x[-1]) >= 2:
+			print (str(x[0][0]) + " from " + printHelper(x[-1]))
+
 
 # convert julian number into starting calendar date
 # return a tuple (day, month, year)
@@ -27,6 +61,7 @@ def jul2date(j):
 OUTLOOK = 14
 WAKE = (7, 0) # tuple to store 7am ?
 SLEEP = (11, 1) # 11pm
+USTIME = True
 
 file = open("schedule.txt", "r", encoding = "utf8")
 lines = file.readlines()
@@ -34,6 +69,7 @@ lines = file.readlines()
 outarr = []
 
 for x in range(len(lines)):
+	lines[x] = lines[x].rstrip("\n")
 	line = lines[x].split(" ")
 	parsed = 0
 
@@ -43,7 +79,6 @@ for x in range(len(lines)):
 		if int(line[0][1:-1], 10) <= OUTLOOK and int(line[0][1:-1], 10) >= 0: # slicing is first inclusive, last exclusive
 			line.append(int(line[0][1:-1], 10))
 			outarr.append(line)
-			print(line)
 			parsed = 1
 	except:
 		pass
@@ -86,13 +121,10 @@ for x in range(len(lines)):
 			if len(strnum) >= 1 and int(strnum, 10) <= OUTLOOK and int(strnum, 10) >= 0:
 				line.append(int(strnum,10))
 				outarr.append(line)
-				print(line)
 				parsed = 1
 		except:
 			pass
 
-print(" ")
-print(outarr)
 
 # outarr now contains [ ["(priority)", "description", "of", "task"] , [...] , ... , priority]
 
@@ -111,7 +143,7 @@ avail = [] # want [  [[str avail],[tuple avail]]  ]
 for x in range(OUTLOOK): # 0 to outlook
 	temp = []
 	curJul = jul2date(julnum + x) # (day, month, year)
-	curDate = str(curJul[0]) + "/" + str(curJul[1]) + "/" + str(curJul[2])
+	curDate = (str(curJul[1]) + "/" + str(curJul[0]) + "/" + str(curJul[2])) if USTIME else (str(curJul[0]) + "/" + str(curJul[1]) + "/" + str(curJul[2]))
 	temp.append(curDate)
 	# a if condition else b ; "\" for linebreak 
 	s = "Free: " + str(WAKE[0]) + ( "AM" if WAKE[1] == 0 else "PM" ) \
@@ -120,9 +152,6 @@ for x in range(OUTLOOK): # 0 to outlook
 	tupavail = [WAKE,SLEEP]
 	avail.append([temp, tupavail])
 
-print(" ")
-print(avail)
-print(" ")
 
 # remove dates in which I am busy with events
 # run through outarr, and change elements in avail
@@ -148,16 +177,82 @@ for x in range(len(outarr)):
 	for y in range(len(event)):
 		m = re.search('[0-9]?:?[0-9]:?[0-9]?[0-9]?.m-[0-9]?:?[0-9]:?[0-9]?[0-9]?.m', str(event[y]))
 		if m != None: # we have found a "time range"
-			print(event[y])
+			# need to convert this time range into a tuple
+			times = event[y].lower().split("-")
+			firstnum = ""
+			firstpm = False
+			secondnum = ""
+			secondpm = False
+			if times[0][1].isdigit():
+				firstnum = times[0][0:2]
+			else:
+				firstnum = times[0][0:1]
+			if "pm" in times[0]:
+				firstpm = True
+
+			firstTuple = (int(firstnum), int(firstpm))
+
+			if times[1][1].isdigit():
+				secondnum = times[1][0:2]
+			else:
+				secondnum = times[1][0:1]
+			if "pm" in times[1]:
+				secondpm = True
+
+			secondTuple = (int(secondnum), int(secondpm))
+
+
 			#event[-1] indexes into avail array
-			#avail[x][{str|tup}][pos]
-			
+
+			# now we have the time tuples of events in firstTuple and secondTuple. 
+			# need to go through and edit our availability array corresponding to these tuples
+
 			# if the event falls within our availability
 			# we need to loop through our tuples to determine this
 			# what are the cases?
 				# 1. the time range falls after 1 tuple, and before the next tuple
 				# 2. the time range starts after 1 tuple, and runs through other tuples
 				# 3. the time range starts before a tuple, and runs past a tuple
-			
-			#if avail[event[-1]][1][]
-			pass
+
+			# check if first tuple starts before availability
+
+			availTups = avail[event[-1]][1] # [(7,0), (11,1)]
+
+			if (firstTuple[1] < availTups[0][1]) or (firstTuple[1] == availTups[0][1] and firstTuple[0] % 12 <= availTups[0][0] % 12):
+				# startTuple starts before availability
+				# until ending tuple is less than the next tuple, delete the next tuple. 
+					# while the ending tuple is greater than the next tuple, delete the next tuple
+					# then, if the next tuple is equal to ending tuple...
+				# if ending tuple is equal to the next tuple, delete it and do not insert self, otherwise do insert self
+				while (secondTuple[1] > availTups[0][1]) or (secondTuple[1] == availTups[0][1] and secondTuple[0] % 12 > availTups[0][0] % 12):
+					del availTups[0]
+				if availTups[0] == secondTuple:
+					del availTups[0]
+				else:
+					# only insert if it's less than SLEEP
+					if (secondTuple[1] < SLEEP[1]) or (secondTuple[1] == SLEEP[1] and secondTuple[0] % 12 < SLEEP[0] % 12):
+						availTups.insert(0, secondTuple)
+
+			# now take care of if first tuple starts after a tuple but before end
+			elif tupLess(firstTuple, availTups[-1]):
+				i = 0
+				# while first tuple is greater than next availtup, iterate through
+				# if it is equal to the availtup, delete that, otherwise just insert
+				while i < len(availTups) and tupGreater(firstTuple, availTups[i]):
+					i += 1
+				#if i < len(availTups) and firstTuple == availTups[i]:
+				#	del availTups[i]
+				#else:
+				availTups.insert(i, firstTuple)
+				i += 1
+				while i < len(availTups) and tupGreater(secondTuple, availTups[i]):
+					del availTups[i]
+					i += 1
+				if i < len(availTups) and secondTuple == availTups[i]:
+					del availTups[i]
+				else:
+					if tupLess(secondTuple, SLEEP):
+						availTups.insert(i, secondTuple)
+
+
+printAvailability(avail)
