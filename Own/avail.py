@@ -140,7 +140,7 @@ julnum = int(lines[1].split(" ")[0], 10)
 avail = [] # want [  [[str avail],[tuple avail]]  ] 
 
 # create availability general
-for x in range(OUTLOOK): # 0 to outlook
+for x in range(OUTLOOK + 1): # 0 to outlook
 	temp = []
 	curJul = jul2date(julnum + x) # (day, month, year)
 	curDate = (str(curJul[1]) + "/" + str(curJul[0]) + "/" + str(curJul[2])) if USTIME else (str(curJul[0]) + "/" + str(curJul[1]) + "/" + str(curJul[2]))
